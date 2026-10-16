@@ -1,0 +1,24 @@
+﻿import { useEffect } from 'react';
+import { Link, useLocation } from 'react-router';
+import { getHomeContent } from '../../services/content';
+import { useAsync } from '../../hooks/useAsync';
+import { Arrow, AsyncState, SectionHeading, Tags } from '../../components/ui/Elements';
+import { ProjectCard, PostCard } from '../../components/portfolio/Cards';
+import Orbit from '../../components/portfolio/Orbit';
+import { safeUrl } from '../../lib/format';
+const categories = [{id:'language',name:'编程语言',label:'01 / LANGUAGES'},{id:'tool',name:'开发与工具',label:'02 / TOOLKIT'},{id:'ml',name:'AI 与机器学习',label:'03 / MACHINE LEARNING'}] as const;
+export default function Home() {
+  const {data,loading,error,retry} = useAsync(getHomeContent);
+  const {hash} = useLocation();
+  useEffect(() => { if(data && hash) document.getElementById(hash.slice(1))?.scrollIntoView(); },[data,hash]);
+  if(loading || error || !data) return <AsyncState loading={loading} error={error} retry={retry}/>;
+  const {profile,skills,projects,posts} = data;
+  return <><section className="shell hero"><div className="hero-copy"><p className="eyebrow hero-eyebrow"><span className="status-dot"/> PERSONAL RESEARCH & DEVELOPMENT</p><p className="hero-intro">你好，我是{profile?.displayName ?? ''}</p><h1>在好奇心与<span className="hero-line">代码之间<span className="accent">，</span></span><span className="hero-last">探索更多可能<span className="accent">。</span></span></h1><p className="hero-description">{profile?.researchSummary ?? '个人资料尚未发布。'}</p><div className="hero-actions"><Link className="button button-primary" to="/#projects">探索我的作品 <Arrow/></Link><Link className="button button-quiet" to="/#contact">聊聊想法 <Arrow/></Link></div><div className="hero-footnote"><span>以研究理解世界</span><span className="muted">/</span><span>以构建回应问题</span></div></div><Orbit/></section><div className="shell section-rule"><span>SCROLL TO EXPLORE</span><span aria-hidden="true">↓</span><span>一份持续生长的探索记录</span></div>
+  {profile && <section id="about" className="shell section"><SectionHeading number="01" label="ABOUT ME" title="始于好奇，行于实践。"/><div className="about-grid"><div><p className="lead">{profile.headline}</p><p className="about-bio">{profile.bio}</p><p className="eyebrow interest-label">CURRENT INTERESTS / 研究兴趣</p><Tags items={profile.researchInterests}/></div><div className="timeline"><p className="eyebrow">EDUCATION & EXPERIENCE / 经历</p>{profile.education.map(item => <div className="timeline-item" key={item.school}>{item.start && <span className="timeline-date">{item.start}{item.end ? ' — ' + item.end : ''}</span>}<h3>{item.school}</h3><p>{item.degree}</p><p>{item.description}</p></div>)}{profile.experiences.map(item => <div className="timeline-item" key={item.organization}>{item.start && <span className="timeline-date">{item.start}{item.end ? ' — ' + item.end : ''}</span>}<h3>{item.organization}</h3><p>{item.role}</p><p>{item.description}</p></div>)}</div></div></section>}
+  <section id="skills" className="shell section"><SectionHeading number="02" label="CAPABILITIES" title="把想法变成现实的工具。"/><div className="skills-grid">{categories.map(category => <div className="skill-group" key={category.id}><p className="eyebrow">{category.label}</p><h3>{category.name}</h3>{skills.filter(s => s.category === category.id).map(skill => <div className="skill-row" key={skill.id}><span>{skill.name}</span><span>{skill.description}</span></div>)}</div>)}</div>{skills.length === 0 && <p>技能内容正在整理中。</p>}</section>
+  <section id="projects" className="shell section"><SectionHeading number="03" label="SELECTED WORK" title="想法的另一种形状。"><p className="section-note">从研究问题出发，<br/>在真实构建中寻找答案。</p></SectionHeading><div className="project-grid">{projects.map((project,index) => <ProjectCard key={project.id} project={project} index={index}/>)}</div>{projects.length === 0 && <p>作品正在整理中。</p>}</section>
+  <section className="shell section"><SectionHeading number="04" label="RESEARCH NOTES / PUBLICATIONS" title="研究札记与学术成果。"><Link className="text-link" to="/blog">研究札记 / Publications <Arrow/></Link></SectionHeading><div>{posts.map((post,index) => <PostCard post={post} index={index} key={post.id}/>)}</div>{posts.length === 0 && <p>内容正在整理中。</p>}</section>
+  {profile && <section id="contact" className="shell contact-section"><p className="eyebrow">05 / LET’S CONNECT</p><div className="contact-grid"><div><h2>下一个有趣的想法，<br/>也许来自一次交流<span className="accent">。</span></h2><p>欢迎聊聊研究、技术，或一个尚未成形的可能。</p></div><div className="contact-links">{profile.email ? <a href={'mailto:' + profile.email}><span className="eyebrow">EMAIL</span><span>{profile.email} <Arrow/></span></a> : <div className="contact-unavailable"><span className="eyebrow">EMAIL</span><span>暂未公开</span></div>}<a href={safeUrl(profile.githubUrl)} target="_blank" rel="noopener noreferrer"><span className="eyebrow">GITHUB</span><span>在 GitHub 相遇 <Arrow/></span></a></div></div></section>}</>;
+}
+
+
